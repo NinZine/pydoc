@@ -329,10 +329,10 @@ Optional argument BUFFER which is used if provided."
              (when pydoc-make-method-buttons
                (pydoc--buttonize-methods pydoc-file))
              (pydoc--buttonize-data pydoc-file)))
-	  ;; When I use `pydoc-at-point' the type here is unknown.
-	  (unknown
-	   (pydoc--buttonize-file)
-	   (pydoc--buttonize-other)))
+          ;; When I use `pydoc-at-point' the type here is unknown.
+          (unknown
+           (pydoc--buttonize-file)
+           (pydoc--buttonize-other)))
         (pydoc--buttonize-urls)
         (pydoc--buttonize-sphinx)
         ;; Delete extraneous newlines at the end of the docstring
@@ -370,7 +370,7 @@ This section is unique to `pydoc-at-point' output."
     (goto-char (point-min))
     (when (re-search-forward "^OTHER MODULES IN THIS FILE" (point-max) t)
       (while (re-search-forward "    \\(.*\\)$" nil t)
-	(help-xref-button 1 'pydoc-help (match-string 1))))))
+        (help-xref-button 1 'pydoc-help (match-string 1))))))
 
 
 (defun pydoc--insert-navigation-links ()
@@ -400,8 +400,8 @@ Adapted from `help-make-xrefs'."
         (goto-char file-pos)
         (looking-at "^FILE\n    \\(.+\\)$")
         (let ((file (match-string-no-properties 1)))
-	  (setq pydoc-file file)
-	  (help-xref-button 1 'pydoc-source pydoc-file))))))
+          (setq pydoc-file file)
+          (help-xref-button 1 'pydoc-source pydoc-file))))))
 
 
 (defun pydoc--buttonize-urls ()
@@ -478,8 +478,8 @@ Adapted from `help-make-xrefs'."
 (defun pydoc-pip-version ()
   "Return a list of (major minor revision) for the pip version."
   (let* ((output (shell-command-to-string "pip --version"))
-	 (string-version (nth 1 (split-string output " " t)))
-	 (string-major-minor-rev (split-string string-version "\\.")))
+         (string-version (nth 1 (split-string output " " t)))
+         (string-major-minor-rev (split-string string-version "\\.")))
     (mapcar
      'string-to-number
      string-major-minor-rev)))
@@ -511,7 +511,7 @@ Adapted from `help-make-xrefs'."
   (apply
    'append
    (mapcar (lambda (x) (split-string x " " t " "))
-	   (cdr (split-string  (shell-command-to-string "python -m pydoc topics") "\n" t " ")))))
+           (cdr (split-string  (shell-command-to-string "python -m pydoc topics") "\n" t " ")))))
 
 
 (defun pydoc-keywords ()
@@ -519,7 +519,7 @@ Adapted from `help-make-xrefs'."
   (apply
    'append
    (mapcar (lambda (x) (split-string x " " t " "))
-	   (cdr (split-string  (shell-command-to-string "python -m pydoc keywords") "\n" t " ")))))
+           (cdr (split-string  (shell-command-to-string "python -m pydoc keywords") "\n" t " ")))))
 
 
 (defvar *pydoc-all-modules*
@@ -534,15 +534,15 @@ Optional RELOAD rereads the cache."
   (if (and (not reload) *pydoc-all-modules*)
       *pydoc-all-modules*
     (setq *pydoc-all-modules*
-	  (delete-dups
-	   (sort
-	    (append
-	     (pydoc-topics)
-	     (pydoc-keywords)
-	     (pydoc-builtin-modules)
-	     (pydoc-user-modules)
-	     (pydoc-pkg-modules))
-	    'string<)))))
+          (delete-dups
+           (sort
+            (append
+             (pydoc-topics)
+             (pydoc-keywords)
+             (pydoc-builtin-modules)
+             (pydoc-user-modules)
+             (pydoc-pkg-modules))
+            'string<)))))
 
 
 ;;* Fontification functions
@@ -581,12 +581,12 @@ These are lines marked by `pydoc-example-code-leader-re'."
   (while (re-search-forward "\\\\([^ ]*?\\\\)" limit t)
     (save-restriction
       (save-excursion
-	(narrow-to-region (match-beginning 0) (match-end 0))
-	(goto-char (point-min))
-	(org-format-latex
-	 (concat temporary-file-directory org-latex-preview-ltxpng-directory "pydoc")
-	 default-directory 'overlays "" '()  'forbuffer
-	 org-latex-create-formula-image-program)))))
+        (narrow-to-region (match-beginning 0) (match-end 0))
+        (goto-char (point-min))
+        (org-format-latex
+         (concat temporary-file-directory org-latex-preview-ltxpng-directory "pydoc")
+         default-directory 'overlays "" '()  'forbuffer
+         org-latex-create-formula-image-program)))))
 
 
 (defun pydoc-latex-overlays-2 (limit)
@@ -594,12 +594,12 @@ These are lines marked by `pydoc-example-code-leader-re'."
   (while (re-search-forward "\\\\\\[[^ ]*?\\\\\\]" limit t)
     (save-restriction
       (save-excursion
-	(narrow-to-region (match-beginning 0) (match-end 0))
-	(goto-char (point-min))
-	(org-format-latex
-	 (concat temporary-file-directory org-latex-preview-ltxpng-directory "pydoc")
-	 default-directory 'overlays "" '()  'forbuffer
-	 org-latex-create-formula-image-program)))))
+        (narrow-to-region (match-beginning 0) (match-end 0))
+        (goto-char (point-min))
+        (org-format-latex
+         (concat temporary-file-directory org-latex-preview-ltxpng-directory "pydoc")
+         default-directory 'overlays "" '()  'forbuffer
+         org-latex-create-formula-image-program)))))
 
 
 (defun pydoc-latex-overlays-3 (limit)
@@ -607,41 +607,41 @@ These are lines marked by `pydoc-example-code-leader-re'."
   (while (re-search-forward "\\$\\$[^ ]*?\\$\\$" limit t)
     (save-restriction
       (save-excursion
-	(narrow-to-region (match-beginning 0) (match-end 0))
-	(goto-char (point-min))
-	(org-format-latex
-	 (concat temporary-file-directory org-latex-preview-ltxpng-directory "pydoc")
-	 default-directory 'overlays "" '()  'forbuffer
-	 org-latex-create-formula-image-program)))))
+        (narrow-to-region (match-beginning 0) (match-end 0))
+        (goto-char (point-min))
+        (org-format-latex
+         (concat temporary-file-directory org-latex-preview-ltxpng-directory "pydoc")
+         default-directory 'overlays "" '()  'forbuffer
+         org-latex-create-formula-image-program)))))
 
 
 (defun pydoc-latex-overlays-4 (limit)
   "Overlay images on $eqn$ up to LIMIT.
 this is less robust than useing \(\)"
-  (while (re-search-forward "\\([^$]\\|^\\)\\(\\(\\$\\([^	\n,;.$][^$\n]*?\\(\n[^$\n]*?\\)\\{0,2\\}[^	\n,.$]\\)\\$\\)\\)\\([-	.,?;:'\") ]\\|$\\)" limit t)
+  (while (re-search-forward "\\([^$]\\|^\\)\\(\\(\\$\\([^   \n,;.$][^$\n]*?\\(\n[^$\n]*?\\)\\{0,2\\}[^    \n,.$]\\)\\$\\)\\)\\([-   .,?;:'\") ]\\|$\\)" limit t)
     (save-restriction
       (save-excursion
-	(narrow-to-region (match-beginning 0) (match-end 0))
-	(goto-char (point-min))
-	(org-format-latex
-	 (concat temporary-file-directory org-latex-preview-ltxpng-directory "pydoc")
-	 default-directory 'overlays "" '()  'forbuffer
-	 org-latex-create-formula-image-program)))))
+        (narrow-to-region (match-beginning 0) (match-end 0))
+        (goto-char (point-min))
+        (org-format-latex
+         (concat temporary-file-directory org-latex-preview-ltxpng-directory "pydoc")
+         default-directory 'overlays "" '()  'forbuffer
+         org-latex-create-formula-image-program)))))
 
 
 (defun pydoc-latex-overlays-5 (limit)
   "Overlay images on latex math environments up to LIMIT."
   (while (re-search-forward
-	  "^[ \\t]*\\(\\\\begin{\\([a-zA-Z0-9\\*]+\\)[^\\000]+?\\\\end{\\2}\\)"
-	  limit t)
+          "^[ \\t]*\\(\\\\begin{\\([a-zA-Z0-9\\*]+\\)[^\\000]+?\\\\end{\\2}\\)"
+          limit t)
     (save-restriction
       (save-excursion
-	(narrow-to-region (match-beginning 1) (match-end 1))
-	(goto-char (point-min))
-	(org-format-latex
-	 (concat temporary-file-directory org-latex-preview-ltxpng-directory "pydoc")
-	 default-directory 'overlays "" '()  'forbuffer
-	 org-latex-create-formula-image-program)))))
+        (narrow-to-region (match-beginning 1) (match-end 1))
+        (goto-char (point-min))
+        (org-format-latex
+         (concat temporary-file-directory org-latex-preview-ltxpng-directory "pydoc")
+         default-directory 'overlays "" '()  'forbuffer
+         org-latex-create-formula-image-program)))))
 
 ;;** font-lock keywords
 (defvar pydoc-font-lock-keywords
@@ -749,14 +749,14 @@ Commands:
     ;; put it here.
     (save-excursion
       (dolist (f '( ;; pydoc-image-overlays
-		   pydoc-latex-overlays-1
-		   pydoc-latex-overlays-2
-		   pydoc-latex-overlays-3
-		   pydoc-latex-overlays-4
-		   pydoc-latex-overlays-5
-		   org-display-inline-images))
-	(goto-char (point-min))
-	(funcall f nil)))
+                   pydoc-latex-overlays-1
+                   pydoc-latex-overlays-2
+                   pydoc-latex-overlays-3
+                   pydoc-latex-overlays-4
+                   pydoc-latex-overlays-5
+                   org-display-inline-images))
+        (goto-char (point-min))
+        (funcall f nil)))
     (setq buffer-read-only t)
     (run-hooks 'pydoc-after-finish-hook)))
 
@@ -768,13 +768,13 @@ Completion is provided with candidates from `pydoc-all-modules'.
 This is cached for speed. Use a prefix arg to refresh it."
   (interactive
    (list (completing-read
-	  "Name of function or module: "
-	  (pydoc-all-modules current-prefix-arg))))
+          "Name of function or module: "
+          (pydoc-all-modules current-prefix-arg))))
   (pydoc-setup-xref (list #'pydoc name)
-		    (called-interactively-p 'interactive))
+                    (called-interactively-p 'interactive))
   (pydoc-with-help-window (pydoc-buffer)
     (call-process-shell-command (concat pydoc-command " " name)
-				nil standard-output)))
+                                nil standard-output)))
 
 ;;;###autoload
 (defun pydoc-at-point ()
@@ -784,12 +784,12 @@ Requires the python package jedi to be installed.
 There is no way right now to get to the full module path. This is a known limitation in jedi."
   (interactive)
   (let* ((script (buffer-string))
-	 (line (line-number-at-pos))
-	 (column (current-column))
-	 (tfile (make-temp-file "py-"))
-	 (python-script
-	  (format
-	   "import jedi
+         (line (line-number-at-pos))
+         (column (current-column))
+         (tfile (make-temp-file "py-"))
+         (python-script
+          (format
+           "import jedi
 s = jedi.Script(\"\"\"%s\"\"\", %s, %s, path=\"%s\")
 gd = s.goto_definitions()
 
@@ -822,21 +822,21 @@ FILE
 OTHER MODULES IN THIS FILE
     {5}
 '''.format(gd[0].full_name, gd[0].module_path, gd[0].line, gd[0].name, gd[0].docstring(), related))"
-       ;; I found I need to quote double quotes so they
-       ;; work in the script above.
-       (replace-regexp-in-string "\"" "\\\\\"" (replace-regexp-in-string "\\\\" "\\\\\\\\" script))
-       line
-       column
-       tfile)))
+           ;; I found I need to quote double quotes so they
+           ;; work in the script above.
+           (replace-regexp-in-string "\"" "\\\\\"" (replace-regexp-in-string "\\\\" "\\\\\\\\" script))
+           line
+           column
+           tfile)))
 
     (pydoc-setup-xref (list #'pydoc (thing-at-point 'word))
-              (called-interactively-p 'interactive))
+                      (called-interactively-p 'interactive))
 
     (pydoc-with-help-window (pydoc-buffer)
       (with-temp-file tfile
-    (insert python-script))
+        (insert python-script))
       (call-process-shell-command (concat "python " tfile)
-                  nil standard-output)
+                                  nil standard-output)
       (delete-file tfile))))
 
 
@@ -859,9 +859,9 @@ Attempts to find an open port, and to reuse the process."
   (unless *pydoc-browser-process*
     ;; find an open port
     (if (executable-find "lsof")
-    (loop for port from 1025
-          if (string= "" (shell-command-to-string (format "lsof -i :%s" port)))
-          return (setq *pydoc-browser-port* (number-to-string port)))
+        (loop for port from 1025
+              if (string= "" (shell-command-to-string (format "lsof -i :%s" port)))
+              return (setq *pydoc-browser-port* (number-to-string port)))
       ;; Windows may not have an lsof command.
       (setq *pydoc-browser-port* pydoc-browser-default-port))
 
@@ -879,9 +879,16 @@ Attempts to find an open port, and to reuse the process."
   (when *pydoc-browser-process*
     (kill-process *pydoc-browser-process*)
     (setq *pydoc-browser-process* nil
-      *pydoc-browser-port* nil)))
+          *pydoc-browser-port* nil)))
 
 
 (provide 'pydoc)
+
+;; Local Variables:
+;; coding: utf-8
+;; indent-tabs-mode: nil
+;; End:
+
+;; company-nihongo.el ends here.
 
 ;;; pydoc.el ends here
