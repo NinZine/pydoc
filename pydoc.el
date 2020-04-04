@@ -74,6 +74,18 @@
   :group 'pydoc)
 
 
+(defcustom pydoc-browse-url-function 'eww
+  "Function to browse pydoc as html."
+  :type 'function
+  :group 'pydoc)
+
+
+(defcustom pydoc-browser-default-port 12345
+  ""
+  :type 'number
+  :group 'pydoc)
+
+
 (defface pydoc-example-leader-face
   '((t (:inherit font-lock-doc-face)))
   "Face used to highlight code example leader (e.g., \">>>\").")
@@ -810,21 +822,21 @@ FILE
 OTHER MODULES IN THIS FILE
     {5}
 '''.format(gd[0].full_name, gd[0].module_path, gd[0].line, gd[0].name, gd[0].docstring(), related))"
-	   ;; I found I need to quote double quotes so they
-	   ;; work in the script above.
-	   (replace-regexp-in-string "\"" "\\\\\"" (replace-regexp-in-string "\\\\" "\\\\\\\\" script))
-	   line
-	   column
-	   tfile)))
+       ;; I found I need to quote double quotes so they
+       ;; work in the script above.
+       (replace-regexp-in-string "\"" "\\\\\"" (replace-regexp-in-string "\\\\" "\\\\\\\\" script))
+       line
+       column
+       tfile)))
 
     (pydoc-setup-xref (list #'pydoc (thing-at-point 'word))
-		      (called-interactively-p 'interactive))
+              (called-interactively-p 'interactive))
 
     (pydoc-with-help-window (pydoc-buffer)
       (with-temp-file tfile
-	(insert python-script))
+    (insert python-script))
       (call-process-shell-command (concat "python " tfile)
-				  nil standard-output)
+                  nil standard-output)
       (delete-file tfile))))
 
 
@@ -847,11 +859,11 @@ Attempts to find an open port, and to reuse the process."
   (unless *pydoc-browser-process*
     ;; find an open port
     (if (executable-find "lsof")
-	(loop for port from 1025
-	      if (string= "" (shell-command-to-string (format "lsof -i :%s" port)))
-	      return (setq *pydoc-browser-port* (number-to-string port)))
+    (loop for port from 1025
+          if (string= "" (shell-command-to-string (format "lsof -i :%s" port)))
+          return (setq *pydoc-browser-port* (number-to-string port)))
       ;; Windows may not have an lsof command.
-      (setq *pydoc-browser-port* "1234"))
+      (setq *pydoc-browser-port* pydoc-browser-default-port))
 
     (setq *pydoc-browser-process*
           (apply
@@ -867,7 +879,7 @@ Attempts to find an open port, and to reuse the process."
   (when *pydoc-browser-process*
     (kill-process *pydoc-browser-process*)
     (setq *pydoc-browser-process* nil
-	  *pydoc-browser-port* nil)))
+      *pydoc-browser-port* nil)))
 
 
 (provide 'pydoc)
