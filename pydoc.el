@@ -936,7 +936,10 @@ print('\\\\n'.join(sorted(list(set(members)))))
   (helm-build-sync-source "*pydoc-helm*"
     :candidates (pydoc-helm--make-candidates)
     :filtered-candidate-transformer #'pydoc-helm--candidate-transformer
-    :keymap pydoc-helm-keymap))
+    :keymap pydoc-helm-keymap
+    :action (helm-make-actions "Default action"
+                               (lambda (candidate)
+                                 (pydoc candidate)))))
 
 (defun pydoc-helm--candidate-transformer (candidates _)
   ;; (message "DEBUG: --sub-source, helm-pattern=%S" helm-pattern)
@@ -1007,9 +1010,7 @@ print(sys.exec_prefix, end='')
 
 (defun pydoc-helm ()
   (interactive)
-  (let ((selected (helm :sources (pydoc-helm--build-toplevel-source))))
-    ;; (message "DEBUG: selected=%s" selected)
-    (and selected (pydoc selected))))
+  (helm :sources (pydoc-helm--build-toplevel-source)))
 
 (provide 'pydoc)
 
