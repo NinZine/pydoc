@@ -882,13 +882,140 @@ Attempts to find an open port, and to reuse the process."
           *pydoc-browser-port* nil)))
 
 
+;;;; helm integration
+;; TODO: Implement persistent-action for completing module name by C-i
+(defvar pydoc-helm--module-cache (make-hash-table :test #'equal)
+  "Hashtable for caching purpose.  The key is a pathname to a pytho
+environment.  The value is a cons cell, car of which is a list of
+modules obtained by `pydoc-all-modules' and cdr of which is another
+hashtable.  This inner hashtable maps module to its members.")
+
+;; (setq pydoc-helm--module-cache (make-hash-table :test #'equal))
+
+(defvar pydoc-helm--python-env-cache (make-hash-table :test #'equal)
+  "key is buffer and value is a path")
+
+(defvar pydoc-helm-keymap
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map helm-map)
+    (define-key map (kbd "C-i") #'pydoc-helm--run-persistent-action)
+    map))
+
+(defun pydoc-helm--run-persistent-action ()
+  (interactive)
+  ;; (message "DEBUG: --run-persistent-action called")
+  (with-helm-alive-p
+    (helm-attrset 'complete-pattern-action '(pydoc-helm--complete-helm-pattern . never-split))
+    (helm-execute-persistent-action 'complete-pattern-action)
+    (helm-force-update)))
+
+(defun pydoc-helm--complete-helm-pattern (pattern)
+  ;; We should handle a case where PATTERN is like "module.member
+  ;; abc".
+  (helm-set-pattern pattern))
+
+(defconst pydoc-helm--get-members-script
+  "\"
+import inspect
+import pkgutil
+import pydoc
+ignore_names = {'__author__', '__builtins__', '__cached__', '__credits__',
+                '__date__', '__doc__', '__file__', '__spec__',
+                '__loader__', '__module__', '__name__', '__package__',
+                '__path__', '__qualname__', '__slots__', '__version__'}
+name = '%s'
+module = pydoc.locate(name)
+members = [name + '.' + member for member, _ in inspect.getmembers(module) if member not in ignore_names]
+if hasattr(module, '__path__'):
+  members += [m.name for m in pkgutil.iter_modules(module.__path__, name + '.')]
+print('\\\\n'.join(sorted(list(set(members)))))
+\""
+  "Inline python script to get members in module named NAME.")
+
+(defun pydoc-helm--build-toplevel-source ()
+  (helm-build-sync-source "*pydoc-helm*"
+    :candidates (pydoc-helm--make-candidates)
+    :filtered-candidate-transformer #'pydoc-helm--candidate-transformer
+    :keymap pydoc-helm-keymap))
+
+(defun pydoc-helm--candidate-transformer (candidates _)
+  ;; (message "DEBUG: --sub-source, helm-pattern=%S" helm-pattern)
+  (let* ((input helm-pattern))
+    (pcase (pydoc-helm--member-p input)
+      ;; "abc." or "abc.def."
+      ((and `(,parent . ,s) (guard parent))
+       (pydoc-helm--make-sub-candidates parent s))
+      (_
+       candidates))))
+
+(defun pydoc-helm--member-p (input)
+  "Return non-il if INPUT seems to represent a qualified name."
+  (let* ((name (cl-find-if (lambda (elt)
+                             (string-match-p "\\w\\." elt))
+                           (split-string input " " t)))
+         (lst (and name (split-string name "\\."))))
+    (and name
+         (cons
+          (mapconcat #'identity
+                     (butlast (split-string name "\\."))
+                     ".")
+          (car (last lst))))))
+
+(defun pydoc-helm--make-sub-candidates (parent s)
+  ;; (message "DEBUG: parent=%S, s=%s" parent s)
+  (pydoc-helm--module-members parent))
+
+(defun pydoc-helm--module-members (parent)
+  (let* ((cmd (concat python-shell-interpreter " -c "
+                      (format pydoc-helm--get-members-script parent)))
+         ;; TODO: key should be cached
+         (key (pydoc-helm--get-python-path))
+         (table (cdr (gethash key pydoc-helm--module-cache nil)))
+         (members (gethash parent table nil)))
+    (cl-assert (hash-table-p table))
+    (when (not members)
+      (setq members (split-string (shell-command-to-string cmd) "\n" t))
+      (puthash parent members table))
+    (cl-remove-if-not (lambda (elt) (helm-mm-3-match elt)) members)))
+
+(defun pydoc-helm--make-candidates ()
+  (pydoc-helm--top-level-modules))
+
+(defun pydoc-helm--top-level-modules ()
+  "Get value from hashtable by KEY.  Value is a cons cell, car of
+which is a list of modules obtained by `pydoc-all-modules' and cdr of
+which is a hashtable.  This hashtable has a module name as key and its
+value is a list of members of that module."
+  (let ((key (pydoc-helm--get-python-path)))
+    (car (or (gethash key pydoc-helm--module-cache nil)
+             ;; This looks like a new python environment, so update
+             ;; hashtable.
+             (puthash key
+                      (cons (pydoc-all-modules t) (make-hash-table :test #'equal))
+                      pydoc-helm--module-cache)))))
+
+(defun pydoc-helm--get-python-path ()
+  "Return a path of python environment currently in use."
+  (or (gethash (current-buffer) pydoc-helm--python-env-cache nil)
+      (puthash (current-buffer)
+               (shell-command-to-string
+                (concat "python" " -c " "\"
+import sys
+print(sys.exec_prefix, end='')
+\""))
+               pydoc-helm--python-env-cache)))
+
+(defun pydoc-helm ()
+  (interactive)
+  (let ((selected (helm :sources (pydoc-helm--build-toplevel-source))))
+    ;; (message "DEBUG: selected=%s" selected)
+    (and selected (pydoc selected))))
+
 (provide 'pydoc)
 
 ;; Local Variables:
 ;; coding: utf-8
 ;; indent-tabs-mode: nil
 ;; End:
-
-;; company-nihongo.el ends here.
 
 ;;; pydoc.el ends here
