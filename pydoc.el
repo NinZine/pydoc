@@ -474,6 +474,11 @@ Adapted from `help-make-xrefs'."
    'symbol-name
    (read (shell-command-to-string "python -c \"import sys; print('({})'.format(' '.join(['\"{}\"'.format(x) for x in sys.builtin_module_names])))\""))))
 
+(defun pydoc-builtin-members ()
+  "Return list of builtin functions."
+  (mapcar
+   'symbol-name
+   (read (shell-command-to-string "python -c \"import inspect, builtins; print('({})'.format(' '.join([name for name, _ in inspect.getmembers(builtins)])))\""))))
 
 (defun pydoc-pip-version ()
   "Return a list of (major minor revision) for the pip version."
@@ -540,6 +545,7 @@ Optional RELOAD rereads the cache."
              (pydoc-topics)
              (pydoc-keywords)
              (pydoc-builtin-modules)
+             (pydoc-builtin-members)
              (pydoc-user-modules)
              (pydoc-pkg-modules))
             'string<)))))
@@ -883,6 +889,9 @@ Attempts to find an open port, and to reuse the process."
 
 
 ;;;; helm integration
+
+(require 'helm)
+
 ;; TODO: Implement persistent-action for completing module name by C-i
 (defvar pydoc-helm--module-cache (make-hash-table :test #'equal)
   "Hashtable for caching purpose.  The key is a pathname to a pytho
