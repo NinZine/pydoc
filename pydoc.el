@@ -932,14 +932,15 @@ print('\\\\n'.join(sorted(list(set(members)))))
 \""
   "Inline python script to get members in module named NAME.")
 
-(defun pydoc-helm--build-toplevel-source ()
+(defun pydoc-helm--build-toplevel-source (reload)
   (helm-build-sync-source "*pydoc-helm*"
-    :candidates (pydoc-helm--make-candidates)
+    :candidates (pydoc-helm--make-candidates reload)
     :filtered-candidate-transformer #'pydoc-helm--candidate-transformer
     :keymap pydoc-helm-keymap
     :action (helm-make-actions "Default action"
                                (lambda (candidate)
-                                 (pydoc candidate)))))
+                                 (pydoc candidate)))
+    :resume t))
 
 (defun pydoc-helm--candidate-transformer (candidates _)
   ;; (message "DEBUG: --sub-source, helm-pattern=%S" helm-pattern)
@@ -981,16 +982,18 @@ print('\\\\n'.join(sorted(list(set(members)))))
       (puthash parent members table))
     (cl-remove-if-not (lambda (elt) (helm-mm-3-match elt)) members)))
 
-(defun pydoc-helm--make-candidates ()
-  (pydoc-helm--top-level-modules))
+(defun pydoc-helm--make-candidates (reload)
+  (pydoc-helm--top-level-modules reload))
 
-(defun pydoc-helm--top-level-modules ()
-  "Get value from hashtable by KEY.  Value is a cons cell, car of
-which is a list of modules obtained by `pydoc-all-modules' and cdr of
-which is a hashtable.  This hashtable has a module name as key and its
-value is a list of members of that module."
+(defun pydoc-helm--top-level-modules (reload)
+  "Get value from hashtable `pydoc-helm--module-cache'.  Value is a
+cons cell, car of which is a list of modules obtained by
+`pydoc-all-modules' and cdr of which is a hashtable.  This hashtable
+has a module name as key and its value is a list of members of that
+module.  If RELOAD is non-nil, clear cache and rebuild a list of
+modules."
   (let ((key (pydoc-helm--get-python-path)))
-    (car (or (gethash key pydoc-helm--module-cache nil)
+    (car (or (and (not reload) (gethash key pydoc-helm--module-cache nil))
              ;; This looks like a new python environment, so update
              ;; hashtable.
              (puthash key
@@ -1008,9 +1011,15 @@ print(sys.exec_prefix, end='')
 \""))
                pydoc-helm--python-env-cache)))
 
-(defun pydoc-helm ()
-  (interactive)
-  (helm :sources (pydoc-helm--build-toplevel-source)))
+(defun pydoc-helm (arg)
+  "Call `pydoc' through helm interface.
+
+The first time this comand is invoked on current python environment,
+document are obtained by running python script and will be cached.
+With universal argument, document will be arranged not from cache, but
+by executing python script."
+  (interactive "P")
+  (helm :sources (pydoc-helm--build-toplevel-source arg)))
 
 (provide 'pydoc)
 
