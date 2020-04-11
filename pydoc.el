@@ -55,12 +55,15 @@
   :group 'external
   :group 'help)
 
-
-(defcustom pydoc-command "python -m pydoc"
-  "The command to use to run pydoc."
+(defcustom pydoc-python-command "python"
+  ""
   :type 'string
   :group 'pydoc)
 
+;; (defcustom pydoc-command "python -m pydoc"
+;;   "The command to use to run pydoc."
+;;   :type 'string
+;;   :group 'pydoc)
 
 (defcustom pydoc-make-method-buttons t
   "If non-nil, create buttons for methods."
@@ -468,6 +471,9 @@ Adapted from `help-make-xrefs'."
 
 
 ;;* Python information
+(defvar pydoc-command "python -m pydoc"
+  "")
+
 (defun pydoc-builtin-modules ()
   "Return list of built in python modules."
   (mapcar
@@ -498,17 +504,34 @@ Adapted from `help-make-xrefs'."
     (shell-command-to-string
      ;; Use either importlib_metadata (a backport of importlib.metadata) or
      ;; importlib.metadata itself if it is available.
-     (concat python-shell-interpreter " -c \"implib_meta_backport = None\nimplib_meta_python = None\ntry: import importlib_metadata;implib_meta_backport = importlib_metadata\nexcept: pass\ntry: import importlib.metadata;implib_meta_python = importlib.metadata\nexcept: pass\nimplib_meta = implib_meta_python or implib_meta_backport\nmods = sorted(map(lambda x: x.metadata['name'], implib_meta.distributions())); print('({})'.format(' '.join(['\"{}\"'.format(x) for x in mods])))  \"")
-     ;; For older versions of Python.
-     ;; (concat python-shell-interpreter " -c \"import pip; mods = sorted([i.key for i in pip.get_installed_distributions()]); print('({})'.format(' '.join(['\"{}\"'.format(x) for x in mods])))  \"")
-     ))))
+     (concat pydoc-python-command " -c" "\"
+implib_meta_backport = None
+implib_meta_python = None
+try:
+  import importlib_metadata
+  implib_meta_backport = importlib_metadata
+except:
+  pass
+try:
+  import importlib.metadata
+  implib_meta_python = importlib.metadata
+except:
+  pass
+implib_meta = implib_meta_python or implib_meta_backport
+if not implib_meta:
+  print('()')
+else:
+  mods = sorted(map(lambda x: x.metadata['name'], implib_meta.distributions()))
+  print('({})'.format(' '.join(['\"{}\"'.format(x) for x in mods])))
+\"")))))
 
 
 (defun pydoc-pkg-modules ()
   "Return list of built in python modules."
   (mapcar
    'symbol-name
-   (read (shell-command-to-string "python -c \"import pkgutil; print('({})'.format(' '.join(['\"{}\"'.format(x[1]) for x in pkgutil.iter_modules()])))\""))))
+   (read (shell-command-to-string
+          (concat pydoc-python-command " -c \"import pkgutil; print('({})'.format(' '.join(['\"{}\"'.format(x[1]) for x in pkgutil.iter_modules()])))\"")))))
 
 
 (defun pydoc-topics ()
@@ -662,9 +685,34 @@ this is less robust than useing \(\)"
     ("\".+?\"" 0 font-lock-string-face)
     ("'.+?'" 0 font-lock-string-face)
     (,(regexp-opt (list "True" "False" "None") 'words)
-     1 font-lock-constant-face))
+     1 font-lock-constant-face)
+    ;; BUG: have not been able to fontify desired strings so far.
+    ("^[ ]*|[ ]+\\([_a-z][A-Za-z0-9_]+\\)(.*)$" . (1 pydoc-face-for-function t)))
   "Font-lock keywords for pydoc.")
 
+;; (setq pydoc-font-lock-keywords
+;;   `((pydoc-fontify-inline-code)
+;;     (org-activate-plain-links)
+;;     (org-activate-bracket-links)
+;;     (org-do-emphasis-faces)
+;;     (,pydoc-sections-re 0 'bold)
+;;     ("\\$[A-z0-9_]+" 0 font-lock-builtin-face)
+;;     ("``.+?``" 0 font-lock-builtin-face)
+;;     ("`.+?`" 0 font-lock-builtin-face)
+;;     ("\".+?\"" 0 font-lock-string-face)
+;;     ("'.+?'" 0 font-lock-string-face)
+;;     (,(regexp-opt (list "True" "False" "None") 'words)
+;;      1 font-lock-constant-face)
+;;     ("^[ ]*|[ ]+\\([_a-z][A-Za-z0-9_]+\\)(.*)$" . (1 pydoc-face-for-function t))))
+
+(defface pydoc-face-for-function
+  '((t (:foreground "yellow" :weight bold)))
+  ""
+  :group 'pydoc-mode)
+
+;; (font-lock-add-keywords
+;;  'pydoc-mode
+;;  '("^[ ]*|[ ]+\\([_a-z][A-Za-z0-9_]+\\)(.*)$" 1 pydoc-face-for-function t))
 
 ;;* pydoc buffer setup
 (defmacro pydoc-with-help-window (buffer-name &rest body)
@@ -779,7 +827,7 @@ This is cached for speed. Use a prefix arg to refresh it."
   (pydoc-setup-xref (list #'pydoc name)
                     (called-interactively-p 'interactive))
   (pydoc-with-help-window (pydoc-buffer)
-    (call-process-shell-command (concat pydoc-command " " name)
+    (call-process-shell-command (concat (pydoc-command) " " name)
                                 nil standard-output)))
 
 ;;;###autoload
@@ -876,7 +924,7 @@ Attempts to find an open port, and to reuse the process."
            #'start-process
            "pydoc-browser"
            "*pydoc-browser*"
-           (append (split-string pydoc-command) `("-p" ,*pydoc-browser-port*)))))
+           (append (split-string (pydoc-command)) `("-p" ,*pydoc-browser-port*)))))
   (browse-url (format "http://localhost:%s" *pydoc-browser-port*)))
 
 ;;;###autoload
@@ -899,10 +947,16 @@ environment.  The value is a cons cell, car of which is a list of
 modules obtained by `pydoc-all-modules' and cdr of which is another
 hashtable.  This inner hashtable maps module to its members.")
 
-;; (setq pydoc-helm--module-cache (make-hash-table :test #'equal))
+(defun pydoc-helm--clear-cache ()
+  (interactive)
+  (setq pydoc-helm--module-cache (make-hash-table :test #'equal))
+  (setq *pydoc-all-modules* nil)
+  (setq pydoc-helm--python-env-cache (make-hash-table :test #'equal)))
+
 
 (defvar pydoc-helm--python-env-cache (make-hash-table :test #'equal)
   "key is buffer and value is a path")
+
 
 (defvar pydoc-helm-keymap
   (let ((map (make-sparse-keymap)))
@@ -979,7 +1033,7 @@ print('\\\\n'.join(sorted(list(set(members)))))
   (pydoc-helm--module-members parent))
 
 (defun pydoc-helm--module-members (parent)
-  (let* ((cmd (concat python-shell-interpreter " -c "
+  (let* ((cmd (concat pydoc-python-command " -c "
                       (format pydoc-helm--get-members-script parent)))
          ;; TODO: key should be cached
          (key (pydoc-helm--get-python-path))
@@ -1012,12 +1066,7 @@ modules."
 (defun pydoc-helm--get-python-path ()
   "Return a path of python environment currently in use."
   (or (gethash (current-buffer) pydoc-helm--python-env-cache nil)
-      (puthash (current-buffer)
-               (shell-command-to-string
-                (concat "python" " -c " "\"
-import sys
-print(sys.exec_prefix, end='')
-\""))
+      (puthash (current-buffer) (executable-find "python")
                pydoc-helm--python-env-cache)))
 
 (defun pydoc-helm (arg)
