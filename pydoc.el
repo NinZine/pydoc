@@ -60,10 +60,10 @@
   :type 'string
   :group 'pydoc)
 
-;; (defcustom pydoc-command "python -m pydoc"
-;;   "The command to use to run pydoc."
-;;   :type 'string
-;;   :group 'pydoc)
+(defcustom pydoc-command "python -m pydoc"
+   "The command to use to run pydoc."
+   :type 'string
+   :group 'pydoc)
 
 (defcustom pydoc-make-method-buttons t
   "If non-nil, create buttons for methods."
@@ -521,7 +521,7 @@ implib_meta = implib_meta_python or implib_meta_backport
 if not implib_meta:
   print('()')
 else:
-  mods = sorted(map(lambda x: x.metadata['name'], implib_meta.distributions()))
+  mods = sorted([i for i in map(lambda x: x.metadata['name'], implib_meta.distributions()) if i])
   print('({})'.format(' '.join(['\"{}\"'.format(x) for x in mods])))
 \"")))))
 
